@@ -33,6 +33,16 @@ export const tableColumns = [
     sortable: true,
   },
   {
+    name: 'Latitude',
+    selector: 'latitude',
+    sortable: true,
+  },
+  {
+    name: 'Longitude',
+    selector: 'longitude',
+    sortable: true,
+  },
+  {
     name: 'Machine type',
     selector: 'machine_type',
     sortable: true,

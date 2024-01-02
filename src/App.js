@@ -2,6 +2,8 @@ import React from 'react';
 
 import DataTable from './components/DataTable.js';
 
+import './assets/application.scss';
+
 function App() {
   return (
     <div className='App'>
