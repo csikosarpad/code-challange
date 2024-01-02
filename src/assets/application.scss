@@ -12,6 +12,25 @@ code {
         monospace;
 }
 
+h1,
+h2,
+h3 {
+    margin: 0;
+    padding: 0;
+}
+
+.greetings {
+    display: flex;
+    gap: 10px;
+
+    span {
+
+        &:not(:last-child):after {
+            content: ', ';
+        }
+    }
+}
+
 .table-content {
     margin: 10px;
     background-color: rgba(0, 0, 128, 0.5);

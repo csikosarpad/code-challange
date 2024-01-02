@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { localeDate } from '../utils/constans.js';
+import { localeDate } from '../utils/utils.js';
+import { tableColumns } from '../utils/constans.js';
 
 const baseUrl =
   'https://codingcase.bluesky-ff1656b7.westeurope.azurecontainerapps.io/';
@@ -81,7 +82,7 @@ const DataTable = () => {
   };
 
   const DataTableTitle = ({ ...tableTitles }) => {
-    const tableColumns = [
+    /*const tableColumns = [
       {
         name: 'ID',
         selector: 'id',
@@ -121,7 +122,7 @@ const DataTable = () => {
         selector: 'status',
         sortable: true,
       },
-    ];
+    ];*/
 
     const cells = Object.values(tableTitles);
     const sortedColumns = sortedBy;
@@ -222,9 +223,13 @@ const DataTable = () => {
     return <div className={cellClassName}>{cellEntry}</div>;
   };
 
-  useEffect(() => {
+  const handleReload = () => {
     const allMachinesUrl = baseUrl + machinesUrl;
     machinesFetch({ url: allMachinesUrl });
+  };
+
+  useEffect(() => {
+    handleReload();
   }, []);
 
   useEffect(() => {
@@ -267,9 +272,12 @@ const DataTable = () => {
   if (error) return <p>Error: {error.message}</p>;
 
   return (
-    <div className='table-content'>
-      {loaded && <DataTableContainer data={data} />}
-    </div>
+    <>
+      <button onClick={handleReload}>Reload</button>
+      <div className='table-content'>
+        {loaded && <DataTableContainer data={data} />}
+      </div>
+    </>
   );
 };
 

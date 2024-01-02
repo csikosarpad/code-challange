@@ -1,17 +1,3 @@
-const dateOptions = {
-  weekday: 'long',
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-};
-
-const dateLocation = 'en-EN';
-
-export const localeDate = (dateString) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString(dateLocation, dateOptions);
-};
-
 export const tableColumns = [
   {
     name: 'ID',
@@ -54,34 +40,4 @@ export const tableColumns = [
   },
 ];
 
-export const _tableColumns = [
-  {
-    name: 'ID',
-    selector: (row) => row.id,
-  },
-  {
-    name: 'Floor',
-    selector: (row) => row.floor,
-    sortable: true,
-  },
-  {
-    name: 'Install date',
-    selector: (row) => localeDate(row.install_date),
-    sortable: true,
-  },
-  {
-    name: 'Last maintenance',
-    selector: (row) => localeDate(row.last_maintenance),
-    sortable: true,
-  },
-  {
-    name: 'Machine type',
-    selector: (row) => row.machine_type,
-    sortable: true,
-  },
-  {
-    name: 'Status',
-    selector: (row) => row.status,
-    sortable: true,
-  },
-];
+export const greetings = ['Lan, Ngo', 'Nilesh, Wagholikar', 'Kiss, Laszlo'];
