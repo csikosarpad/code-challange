@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { localeDate } from '../utils/utils.js';
-import { tableColumns } from '../utils/constans.js';
-
-const baseUrl =
-  'https://codingcase.bluesky-ff1656b7.westeurope.azurecontainerapps.io/';
-const machinesUrl = '/api/v1/machines';
+import { baseUrl, machinesUrl, tableColumns } from '../utils/constans.js';
 
 const DataTable = () => {
   const [data, setData] = useState(null);

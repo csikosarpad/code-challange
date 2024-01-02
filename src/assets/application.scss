@@ -142,3 +142,11 @@ h3 {
     font-size: 5rem;
     text-align: center;
 }
+
+#socket-message-box {
+    width: 90%;
+    overflow: auto;
+    font-size: 0.7rem;
+    line-height: 1.4;
+    resize: none;
+}
