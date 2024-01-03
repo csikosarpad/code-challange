@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 
 import DataTable from './components/DataTable.js';
-import SocketMessageBox from './components/SocketMessageBox.js';
 import { greetings } from './utils/constans.js';
 
 import './assets/application.scss';
@@ -25,7 +24,6 @@ function App() {
           )}
         </div>
       </header>
-      <SocketMessageBox />
       <DataTable />
     </div>
   );

@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { Socket } from 'phoenix';
 import { localeDate } from '../utils/utils.js';
-import { baseUrl, machinesUrl, tableColumns } from '../utils/constans.js';
+import {
+  baseUrl,
+  machinesUrl,
+  tableColumns,
+  socketUrl,
+} from '../utils/constans.js';
 
 const DataTable = () => {
   const [data, setData] = useState(null);
@@ -13,13 +19,21 @@ const DataTable = () => {
   const [errorLine, setErrorLine] = useState(null);
   const [linkUrl, setLinkUrl] = useState('');
   const [rowLine, setRowLine] = useState('');
-  const [sortedBy, setSortedBy] = useState(null);
+  const [sortedBy, setSortedBy] = useState('last_maintenance');
   const [orderBy, setOrderBy] = useState(true);
+  const [liveOn, setLiveOn] = useState(false);
+  const [upDataEventList, setUpDataEventList] = useState({});
+
+  const socket = new Socket(socketUrl);
+  socket.connect();
+  const channel = socket.channel('events', {});
+  channel.join();
 
   const machinesFetch = async ({ url }) => {
     try {
       const response = await fetch(url);
       const result = await response.json();
+
       setData(result.data);
       setLoaded(true);
       setLoading(false);
@@ -33,6 +47,7 @@ const DataTable = () => {
     try {
       const response = await fetch(url);
       const result = await response.json();
+
       setDataLine(result.data);
       setLoadedLine(true);
       setLoadingLine(false);
@@ -44,8 +59,10 @@ const DataTable = () => {
 
   const FetchLink = (entry) => {
     const HandleFetchMachine = (ev) => {
+      ev.preventDefault();
       const link = ev.target;
       const entry = link.textContent;
+
       setRowLine(entry);
       setLinkUrl(`${baseUrl}api/v1/machines/${entry}`);
     };
@@ -55,6 +72,39 @@ const DataTable = () => {
         {entry}
       </span>
     );
+  };
+
+  const EffectedLine = (lineId) => {
+    if (lineId) {
+      const dataRowId = `data_row_${lineId}`;
+      document
+        .querySelector(`[data-row-id=${dataRowId}]`)
+        .classList.add('updated');
+    }
+  };
+
+  const LiveDataUpdate = (updateData) => {
+    const currentLine = data?.find((item) => item.id === updateData.machine_id);
+    if (currentLine) {
+      currentLine.status = updateData.status;
+      currentLine.last_maintenance = updateData.timestamp;
+    }
+    //setData(data);
+    DataSorting(data);
+  };
+
+  const LiveData = (onOff) => {
+    switch (onOff) {
+      case true:
+        channel.on('new', (eventList) => {
+          setUpDataEventList(eventList);
+          console.log('socket:', eventList);
+        });
+        break;
+      default:
+        channel.off('new');
+        break;
+    }
   };
 
   const DataTableContainer = ({ ...restProps }) => {
@@ -70,6 +120,7 @@ const DataTable = () => {
   };
 
   const HandleTitle = (ev, sortable) => {
+    ev.preventDefault();
     if (sortable) {
       const title = ev.target.getAttribute('data-title');
       setOrderBy(!orderBy);
@@ -78,53 +129,11 @@ const DataTable = () => {
   };
 
   const DataTableTitle = ({ ...tableTitles }) => {
-    /*const tableColumns = [
-      {
-        name: 'ID',
-        selector: 'id',
-      },
-      {
-        name: 'Floor',
-        selector: 'floor',
-        sortable: true,
-      },
-      {
-        name: 'Install date',
-        selector: 'install_date',
-        sortable: true,
-      },
-      {
-        name: 'Last maintenance',
-        selector: 'last_maintenance',
-        sortable: true,
-      },
-      {
-        name: 'Latitude',
-        selector: 'latitude',
-        sortable: true,
-      },
-      {
-        name: 'Longitude',
-        selector: 'longitude',
-        sortable: true,
-      },
-      {
-        name: 'Machine type',
-        selector: 'machine_type',
-        sortable: true,
-      },
-      {
-        name: 'Status',
-        selector: 'status',
-        sortable: true,
-      },
-    ];*/
-
     const cells = Object.values(tableTitles);
     const sortedColumns = sortedBy;
     const orderColumn = orderBy ? 'cell title desc' : 'cell title asc';
     return (
-      <div className='data-row title' {...cells}>
+      <div key='title_row' className='data-row title' {...cells}>
         {cells.map((item) => {
           const activeColClassName =
             sortedColumns === item ? orderColumn : 'cell title';
@@ -136,6 +145,7 @@ const DataTable = () => {
                 HandleTitle(ev, actTitle?.sortable);
               }}
               data-title={item}
+              key={`title_${item}`}
             >
               {actTitle?.name}
             </div>
@@ -165,7 +175,9 @@ const DataTable = () => {
     responseData.events.length = maxEvents;
     return (
       <div className='data-row events-rows'>
-        <p>Last {maxEvents} events results</p>
+        <p>
+          Last {maxEvents} events results on {responseData.id}
+        </p>
         {responseData.events.map((item) => {
           return (
             <div className={`events-row cell ${item.status}`}>
@@ -181,11 +193,14 @@ const DataTable = () => {
   const DataTableRow = ({ ...restProps }) => {
     const rowClassName =
       rowLine === restProps.id ? 'active data-row' : 'data-row';
+    const keyRowId = `data_row_${restProps.id}`;
+    const keyCellIdPart = `data_cell_${restProps.id}`;
     return (
       <>
-        <div className={rowClassName} key={`data_row_${restProps.id}`}>
+        <div className={rowClassName} key={keyRowId} data-row-id={keyRowId}>
           {Object.entries(restProps).map((cell) => {
-            return <DataTableCell {...cell} />;
+            const param = { keyCellIdPart, cell };
+            return <DataTableCell {...param} />;
           })}
         </div>
       </>
@@ -193,8 +208,11 @@ const DataTable = () => {
   };
 
   const DataTableCell = ({ ...restProps }) => {
-    const key = restProps[0];
-    const value = restProps[1];
+    const { cell, keyCellIdPart } = restProps;
+    const key = cell[0];
+    const value = cell[1];
+    const keyCellId = `${keyCellIdPart}_${key}`;
+
     let cellEntry = '';
     let cellClassName = 'cell';
 
@@ -216,7 +234,11 @@ const DataTable = () => {
         cellEntry = value;
         break;
     }
-    return <div className={cellClassName}>{cellEntry}</div>;
+    return (
+      <div key={keyCellId} className={cellClassName}>
+        {cellEntry}
+      </div>
+    );
   };
 
   const handleReload = () => {
@@ -224,15 +246,11 @@ const DataTable = () => {
     machinesFetch({ url: allMachinesUrl });
   };
 
-  useEffect(() => {
-    handleReload();
-  }, []);
+  const handleLiveData = () => {
+    setLiveOn(!liveOn);
+  };
 
-  useEffect(() => {
-    machineLineFetch({ url: linkUrl });
-  }, [linkUrl]);
-
-  useEffect(() => {
+  const DataSorting = () => {
     switch (sortedBy) {
       case 'floor':
       case 'latitude':
@@ -262,6 +280,28 @@ const DataTable = () => {
         break;
     }
     setData(data);
+  };
+
+  useEffect(() => {
+    const machineId = upDataEventList.machine_id;
+    LiveDataUpdate(upDataEventList);
+    EffectedLine(machineId);
+  }, [upDataEventList]);
+
+  useEffect(() => {
+    LiveData(liveOn);
+  }, [liveOn]);
+
+  useEffect(() => {
+    handleReload();
+  }, []);
+
+  useEffect(() => {
+    machineLineFetch({ url: linkUrl });
+  }, [linkUrl]);
+
+  useEffect(() => {
+    DataSorting(data);
   }, [orderBy, sortedBy]);
 
   if (loading) return <div className='loading'>Data fetch in progress...</div>;
@@ -270,6 +310,9 @@ const DataTable = () => {
   return (
     <>
       <button onClick={handleReload}>Reload</button>
+      <button onClick={handleLiveData} disabled={liveOn}>
+        {liveOn ? 'Living process' : 'Start Live Data fetch'}
+      </button>
       <div className='table-content'>
         {loaded && <DataTableContainer data={data} />}
       </div>
