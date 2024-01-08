@@ -14,9 +14,6 @@ const DataTable = () => {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(null);
   const [dataLine, setDataLine] = useState(null);
-  const [loadingLine, setLoadingLine] = useState(true);
-  const [loadedLine, setLoadedLine] = useState(false);
-  const [errorLine, setErrorLine] = useState(null);
   const [linkUrl, setLinkUrl] = useState('');
   const [rowLine, setRowLine] = useState('');
   const [sortedBy, setSortedBy] = useState('last_maintenance');
@@ -26,8 +23,7 @@ const DataTable = () => {
 
   const socket = new Socket(socketUrl);
   socket.connect();
-  const channel = socket.channel('events', {});
-  channel.join();
+  const eventsChannel = socket.channel('events', {});
 
   const machinesFetch = async ({ url }) => {
     try {
@@ -49,11 +45,8 @@ const DataTable = () => {
       const result = await response.json();
 
       setDataLine(result.data);
-      setLoadedLine(true);
-      setLoadingLine(false);
     } catch (error) {
-      setErrorLine(error);
-      setLoadingLine(false);
+      //TODO setErrorLine(error);
     }
   };
 
@@ -89,20 +82,21 @@ const DataTable = () => {
       currentLine.status = updateData.status;
       currentLine.last_maintenance = updateData.timestamp;
     }
-    //setData(data);
     DataSorting(data);
   };
 
   const LiveData = (onOff) => {
+    // eslint-disable-next-line default-case
     switch (onOff) {
       case true:
-        channel.on('new', (eventList) => {
+        eventsChannel.join();
+        eventsChannel.on('new', (eventList) => {
           setUpDataEventList(eventList);
           console.log('socket:', eventList);
         });
         break;
-      default:
-        channel.off('new');
+      case false:
+        //TODO eventsChannel.off('new');
         break;
     }
   };
@@ -310,7 +304,7 @@ const DataTable = () => {
   return (
     <>
       <button onClick={handleReload}>Reload</button>
-      <button onClick={handleLiveData} disabled={liveOn}>
+      <button onClick={handleLiveData}>
         {liveOn ? 'Living process' : 'Start Live Data fetch'}
       </button>
       <div className='table-content'>

@@ -157,4 +157,15 @@ h3 {
 
 button {
     cursor: pointer;
+    border: 0;
+    background-color: #080;
+    color: #fff;
+
+    +button {
+        margin-left: 10px;
+    }
+
+    &:disabled {
+        background-color: #888;
+    }
 }
