@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Socket } from 'phoenix';
+
+import { Context } from '../contexts/Context.js';
+
 import { localeDate } from '../utils/utils.js';
-import {
-  baseUrl,
-  machinesUrl,
-  tableColumns,
-  socketUrl,
-} from '../utils/constans.js';
+import { baseUrl, machinesUrl, tableColumns } from '../utils/constans.js';
 
 const DataTable = () => {
   const [data, setData] = useState(null);
@@ -19,11 +16,11 @@ const DataTable = () => {
   const [sortedBy, setSortedBy] = useState('last_maintenance');
   const [orderBy, setOrderBy] = useState(true);
   const [liveOn, setLiveOn] = useState(false);
-  const [upDataEventList, setUpDataEventList] = useState({});
+  //  const [upDataEventList, setUpDataEventList] = useState({});
 
-  const socket = new Socket(socketUrl);
+  /*const socket = new Socket(socketUrl);
   socket.connect();
-  const eventsChannel = socket.channel('events', {});
+  const eventsChannel = socket.channel('events', {});*/
 
   const machinesFetch = async ({ url }) => {
     try {
@@ -85,7 +82,7 @@ const DataTable = () => {
     DataSorting(data);
   };
 
-  const LiveData = (onOff) => {
+  /*const LiveData = (onOff) => {
     // eslint-disable-next-line default-case
     switch (onOff) {
       case true:
@@ -99,7 +96,7 @@ const DataTable = () => {
         //TODO eventsChannel.off('new');
         break;
     }
-  };
+  };*/
 
   const DataTableContainer = ({ ...restProps }) => {
     const { data } = restProps;
@@ -276,14 +273,14 @@ const DataTable = () => {
     setData(data);
   };
 
-  useEffect(() => {
+  /*useEffect(() => {
     const machineId = upDataEventList.machine_id;
     LiveDataUpdate(upDataEventList);
     EffectedLine(machineId);
-  }, [upDataEventList]);
+  }, [upDataEventList]);*/
 
   useEffect(() => {
-    LiveData(liveOn);
+    //LiveData(liveOn);
   }, [liveOn]);
 
   useEffect(() => {

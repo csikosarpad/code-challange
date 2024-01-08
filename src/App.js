@@ -1,32 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 
-import DataTable from './components/DataTable.js';
-import { greetings } from './utils/constans.js';
+import AppHeader from './components/AppHeader.js';
+import DataTableApp from './components/DataTableApp.js';
 
 import './assets/application.scss';
 
-function App() {
-  const [opened, setOpened] = useState(true);
-
+const App = () => {
   return (
     <div className='App'>
-      <header className='App-header'>
-        <div onClick={(ev) => setOpened(!opened)}>
-          {opened && <h1>Code challange</h1>}
-          <h3>Árpád Csikos' solution for Zeiss</h3>
-          {opened && (
-            <h3 className='greetings'>
-              Greetings to the auditors:
-              {greetings.map((item) => (
-                <span>[{item}]</span>
-              ))}
-            </h3>
-          )}
-        </div>
-      </header>
-      <DataTable />
+      <AppHeader />
+      <DataTableApp />
     </div>
   );
-}
+};
 
 export default App;
