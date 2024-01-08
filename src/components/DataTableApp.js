@@ -1,17 +1,22 @@
 import React, { useState, useEffect, useContext } from 'react';
 
-import { Context } from '../contexts/Context.js';
+import { PhoenixSocketContext } from '../contexts/Context.js';
 import { baseUrl, machinesUrl } from '../utils/constans.js';
 import { localeDate } from '../utils/utils.js';
+import useChannel from '../hooks/useChannel.js';
 
 // components
 const DataTableApp = () => {
-  const value = useContext(Context);
+  const value = useContext(PhoenixSocketContext);
   const { state, dispatch } = value;
 
   const [loading, setLoading] = useState(true);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(null);
+
+  const LOAD_MESSAGE = 'new';
+  const [eventsResponse, setEventsResponse] = useState(null);
+  const [eventsChannel] = useChannel('events');
 
   const [dataLine, setDataLine] = useState(null);
   const [rowLine, setRowLine] = useState('');
@@ -23,14 +28,13 @@ const DataTableApp = () => {
   const machines = state.data;
   const tableColumns = state.tableColumns;
 
-  const DataTableContainer = ({ ...restProps }) => {
-    const { data } = restProps;
-    const responseData = Array.isArray(data) ? data : data.data;
+  const DataTableContainer = () => {
+    const responseData = Array.isArray(machines) ? machines : machines.data;
     const tableTitles = Object.keys(responseData[0]);
     return (
       <div className='data-table'>
         <DataTableTitle {...tableTitles} />
-        <DataTableRows {...restProps} />
+        <DataTableRows />
       </div>
     );
   };
@@ -134,9 +138,8 @@ const DataTableApp = () => {
     );
   };
 
-  const DataTableRows = ({ ...restProps }) => {
-    const { data } = restProps;
-    return Object.values(data).map((line) => {
+  const DataTableRows = () => {
+    return Object.values(machines).map((line) => {
       if (dataLine && line?.id === dataLine?.id) {
         return (
           <>
@@ -199,8 +202,6 @@ const DataTableApp = () => {
       const response = await fetch(url);
       const result = await response.json();
       setData(result.data);
-
-      //setData(result.data);
       setLoaded(true);
       setLoading(false);
     } catch (error) {
@@ -241,6 +242,26 @@ const DataTableApp = () => {
     setData(machines);
   };
 
+  const EffectedLine = (lineId) => {
+    if (lineId) {
+      const dataRowId = `data_row_${lineId}`;
+      document
+        .querySelector(`[data-row-id=${dataRowId}]`)
+        .classList.add('updated');
+    }
+  };
+
+  const LiveDataUpdate = (updateData) => {
+    const currentLine = machines?.find(
+      (item) => item.id === updateData.machine_id
+    );
+    if (currentLine) {
+      currentLine.status = updateData.status;
+      currentLine.last_maintenance = updateData.timestamp;
+    }
+    DataSorting(machines);
+  };
+
   const handleReload = () => {
     const allMachinesUrl = baseUrl + machinesUrl;
     allMachinesFetch({ url: allMachinesUrl });
@@ -264,6 +285,33 @@ const DataTableApp = () => {
     DataSorting(machines);
   }, [orderBy, sortedBy]);
 
+  /**
+   * // Join correct channel and log events
+    const channel = socket.channel("events", {});
+    channel.join();
+    channel.on("new", (event) => console.log(event));
+   */
+
+  useEffect(() => {
+    if (!eventsChannel && !liveOn) return;
+    if (eventsChannel && liveOn) {
+      eventsChannel.on(LOAD_MESSAGE, (channelResponse) => {
+        setEventsResponse(channelResponse);
+      });
+    }
+    if (eventsChannel && !liveOn) {
+    }
+  }, [eventsChannel, liveOn]);
+
+  useEffect(() => {
+    if (eventsResponse?.machine_id) {
+      const machineId = eventsResponse.machine_id;
+      LiveDataUpdate(eventsResponse);
+      EffectedLine(machineId);
+      console.log('socket:', eventsResponse);
+    }
+  }, [eventsResponse]);
+
   if (loading) return <div className='loading'>Data fetch in progress...</div>;
   if (error) return <p>Error: {error.message}</p>;
 
@@ -274,9 +322,7 @@ const DataTableApp = () => {
         {liveOn ? 'Living process' : 'Start Live Data fetch'}
       </button>
 
-      <div className='table-content'>
-        {loaded && <DataTableContainer data={machines} />}
-      </div>
+      <div className='table-content'>{loaded && <DataTableContainer />}</div>
     </>
   );
 };

@@ -92,30 +92,28 @@ h3 {
             cursor: pointer;
             position: relative;
 
-            &.asc:after {
+            &:after {
                 content: '';
-                display: block;
+                display: none;
                 position: absolute;
-                right: 10px;
-                top: 5px;
                 width: 20px;
                 height: 20px;
-                background: url(sort.png);
+                right: 10px;
+                top: 5px;
+                background-color: #fff;
+                border-radius: 50%;
                 background-repeat: no-repeat;
-                background-size: contain;
+                background-size: cover;
+            }
+
+            &.asc:after {
+                display: block;
+                background-image: url(sort.png);
             }
 
             &.desc:after {
-                content: '';
                 display: block;
-                position: absolute;
-                right: 10px;
-                top: 5px;
-                width: 20px;
-                height: 20px;
-                background: url(sort-descending.png);
-                background-repeat: no-repeat;
-                background-size: contain;
+                background-image: url(sort-descending.png);
             }
         }
 

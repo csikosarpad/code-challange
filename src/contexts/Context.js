@@ -1,7 +1,7 @@
-import { createContext, useEffect, useReducer } from 'react';
+import React, { createContext, useEffect, useReducer, useState } from 'react';
 import { Socket } from 'phoenix';
 
-export const Context = createContext();
+const PhoenixSocketContext = createContext({ socket: null });
 
 const tableColumns = [
   {
@@ -61,19 +61,23 @@ function reducer(state, action) {
   }
 }
 
-const Provider = ({ wsUrl, options, children }) => {
-  const socket = new Socket(wsUrl, { params: options });
+const PhoenixSocketProvider = ({ wsUrl, options, children }) => {
+  const [socket, setSocket] = useState();
   const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
+    const socket = new Socket(wsUrl, { params: options });
     socket.connect();
+    setSocket(socket);
   }, [options, wsUrl]);
 
+  if (!socket) return null;
+
   return (
-    <Context.Provider value={{ socket, state, dispatch }}>
+    <PhoenixSocketContext.Provider value={{ socket, state, dispatch }}>
       {children}
-    </Context.Provider>
+    </PhoenixSocketContext.Provider>
   );
 };
 
-export default Provider;
+export { PhoenixSocketContext, PhoenixSocketProvider };

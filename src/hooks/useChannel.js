@@ -1,46 +1,33 @@
-import { useContext, useEffect, useReducer, useState } from 'react';
-import Context from '../contexts/Context';
+import { useState, useContext, useEffect } from 'react';
+import { PhoenixSocketContext } from '../contexts/Context';
 
-const useChannel = (channelTopic, reducer, initialState) => {
-  const socket = useContext(Context);
-  const [state, dispatch] = useReducer(reducer, initialState);
-  const [broadcast, setBroadcast] = useState(mustJoinChannelWarning);
+/**
+   * // Join correct channel and log events
+    const channel = socket.channel("events", {});
+    channel.join();
+    channel.on("new", (event) => console.log(event));
+   */
 
-  useEffect(
-    () => joinChannel(socket, channelTopic, dispatch, setBroadcast),
-    [channelTopic]
-  );
+const useChannel = (channelName) => {
+  const [channel, setChannel] = useState();
+  const { socket } = useContext(PhoenixSocketContext);
 
-  return [state, broadcast];
+  useEffect(() => {
+    const phoenixChannel = socket.channel(channelName);
+
+    phoenixChannel.join().receive('ok', () => {
+      setChannel(phoenixChannel);
+    });
+
+    // leave the channel when the component unmounts
+    return () => {
+      phoenixChannel.leave();
+    };
+  }, []);
+  // only connect to the channel once on component mount
+  // by passing the empty array as a second arg to useEffect
+
+  return [channel];
 };
-
-const joinChannel = (socket, channelTopic, dispatch, setBroadcast) => {
-  const channel = socket.channel(channelTopic, { client: 'browser' });
-
-  channel.onMessage = (event, payload) => {
-    dispatch({ event, payload });
-    return payload;
-  };
-
-  channel
-    .join()
-    .receive('ok', ({ messages }) =>
-      console.log('successfully joined channel', messages || '')
-    )
-    .receive('error', ({ reason }) =>
-      console.error('failed to join channel', reason)
-    );
-
-  setBroadcast(() => channel.push.bind(channel));
-
-  return () => {
-    channel.leave();
-  };
-};
-
-const mustJoinChannelWarning = () => () =>
-  console.error(
-    `useChannel broadcast function cannot be invoked before the channel has been joined`
-  );
 
 export default useChannel;
