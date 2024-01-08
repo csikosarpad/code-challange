@@ -318,7 +318,7 @@ const DataTableApp = () => {
   return (
     <>
       <button onClick={handleReload}>Reload</button>
-      <button onClick={handleLiveData}>
+      <button onClick={handleLiveData} disabled={liveOn}>
         {liveOn ? 'Living process' : 'Start Live Data fetch'}
       </button>
 
